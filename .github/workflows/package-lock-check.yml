@@ -30,6 +30,16 @@ jobs:
         with:
           result-encoding: string
           script: |
+            console.log(context);
+
+            const files = await github.pulls.listFiles({
+              pull_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            console.log('FILES', files);
+
             const parts = [
                 "Ensure that the `package-lock.json` has not changed unexpectedly.",
                 ...(process.env.FILES.split(' ').map((f) => {
