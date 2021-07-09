@@ -17,6 +17,10 @@ jobs:
         with:
           fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
 
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v8.4
+
       - name: Get specific changed files
         id: package-lock-check
         uses: tj-actions/changed-files@v8.4
@@ -24,21 +28,26 @@ jobs:
           files: |
             package-lock.json
 
-      - name: List all added files
-        if: steps.package-lock-check.outputs.any_changed == 'true'
-        run: |
-          export _MSG=$(printf "%s\n" "Lock file changes:")
-          for file in "${{ steps.package-lock-check.added_files }}"; do
-            _MSG+=$(printf "\n%s" "\`$file\`")
-          done
-          export MSG="$_MSG"
-          echo "::set-env name=MSG::$MSG"
-
-      - name: comment PR
-        uses: unsplash/comment-on-pr@master
+      - name: Comment on PR
+        uses: actions/github-script@v4
         if: steps.package-lock-check.outputs.any_changed == 'true'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FILES: ${{ steps.changed-files.outputs.all_modified_files }}
         with:
-          msg: ${{ env.MSG }}
-          check_for_duplicate_msg: true
+          script: |
+            const { issue: { number: issue_number }, repo: { owner, repo } } = context;
+            console.log(context);
+            console.log('FILES', process.env.FILES);
+
+            const parts = ["The following lock files have modifications:", ...(process.env.FILES.split(' ').map((f) => {
+                if (f.includes("package-lock.json")) {
+                    return `- \`${f}\``
+                }
+            }).filter(e => e))];
+
+            github.issues.createComment({
+              issue_number,
+              owner,
+              repo,
+              body: parts.join("\n")
+            })
