@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Test changed-files
+    name: package-lock.json check
     steps:
       - uses: actions/checkout@v2
         with:
@@ -28,16 +28,17 @@ jobs:
           files: |
             package-lock.json
 
-      - name: Comment on PR
+      - name: Build comment
         uses: actions/github-script@v4
+        id: comment
         if: steps.package-lock-check.outputs.any_changed == 'true'
         env:
           FILES: ${{ steps.changed-files.outputs.all_modified_files }}
         with:
+          result-encoding: string
           script: |
-            const { issue: { number: issue_number }, repo: { owner, repo } } = context;
-
-            const parts = ["To avoid a blocking Change Request, ensure that the `package-lock.json` has not changed unexpectedly.",
+            const parts = [
+                "To avoid a blocking Change Request, ensure that the `package-lock.json` has not changed unexpectedly.",
                 ...(process.env.FILES.split(' ').map((f) => {
                     if (f.includes("package-lock.json")) {
                         return `- [ ] \`${f}\` has no unexpected changes`
@@ -45,9 +46,18 @@ jobs:
                 }).filter(e => e))
             ];
 
-            github.issues.createComment({
-              issue_number,
-              owner,
-              repo,
-              body: parts.join("\n")
-            })
+            return parts.join("\n")
+
+      - name: Add sticky comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: steps.package-lock-check.outputs.any_changed == 'true'
+        with:
+          header: package-lock.json notice
+          message: ${{ steps.comment.outputs.result }}
+
+      - name: Remove comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: steps.package-lock-check.outputs.any_changed == 'false'
+        with:
+          header: package-lock.json notice
+          delete: true
