@@ -31,7 +31,7 @@ jobs:
           result-encoding: string
           script: |
             const parts = [
-                "To avoid a blocking Change Request, ensure that the `package-lock.json` has not changed unexpectedly.",
+                "Ensure that the `package-lock.json` has not changed unexpectedly.",
                 ...(process.env.FILES.split(' ').map((f) => {
                     if (f.includes("package-lock.json")) {
                         return `- [ ] \`${f}\` has no unexpected changes`
