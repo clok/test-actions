@@ -39,11 +39,13 @@ jobs:
             console.log(context);
             console.log('FILES', process.env.FILES);
 
-            const parts = ["The following lock files have modifications:", ...(process.env.FILES.split(' ').map((f) => {
-                if (f.includes("package-lock.json")) {
-                    return `- \`${f}\``
-                }
-            }).filter(e => e))];
+            const parts = ["To avoid a blocking Change Request, ensure that the `package-lock.json` has not changed unexpectedly.",
+                ...(process.env.FILES.split(' ').map((f) => {
+                    if (f.includes("package-lock.json")) {
+                        return `- [ ] \`${f}\` has no unexpected changes`
+                    }
+                }).filter(e => e))
+            ];
 
             github.issues.createComment({
               issue_number,
