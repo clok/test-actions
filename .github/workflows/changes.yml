@@ -27,12 +27,12 @@ jobs:
       - name: List all added files
         if: steps.package-lock-check.outputs.any_changed == 'true'
         run: |
-          local _MSG=$(printf "%s\n" "Lock file changes:")
+          export _MSG=$(printf "%s\n" "Lock file changes:")
           for file in "${{ steps.package-lock-check.added_files }}"; do
             _MSG+=$(printf "\n%s" "\`$file\`")
           done
           export MSG="$_MSG"
-          echo "::set-env name=MSG::MSG"
+          echo "::set-env name=MSG::$MSG"
 
       - name: comment PR
         uses: unsplash/comment-on-pr@master
