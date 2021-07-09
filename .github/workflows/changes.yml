@@ -1,4 +1,4 @@
-name: 'Files Changed'
+name: 'package-lock.json check'
 
 on:
   push:
@@ -10,12 +10,12 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # windows-latest | macos-latest
+    runs-on: ubuntu-latest
     name: Test changed-files
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
+          fetch-depth: 0
 
       - name: Get changed files
         id: changed-files
@@ -36,8 +36,6 @@ jobs:
         with:
           script: |
             const { issue: { number: issue_number }, repo: { owner, repo } } = context;
-            console.log(context);
-            console.log('FILES', process.env.FILES);
 
             const parts = ["To avoid a blocking Change Request, ensure that the `package-lock.json` has not changed unexpectedly.",
                 ...(process.env.FILES.split(' ').map((f) => {
