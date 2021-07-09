@@ -17,38 +17,28 @@ jobs:
         with:
           fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
 
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v8.4
-
-      - name: List all modified files
-        run: |
-          for file in "${{ steps.changed-files.outputs.all_modified_files }}"; do
-            echo "$file was modified"
-          done
-
-      - name: Run step when a file changes
-        if: contains(steps.changed-files.outputs.modified_files, 'package-lock.json')
-        run: |
-          echo "Your file my-file.txt has been modified."
-
       - name: Get specific changed files
-        id: changed-files-specific
+        id: package-lock-check
         uses: tj-actions/changed-files@v8.4
         with:
           files: |
             package-lock.json
 
-      - name: Run step if any of the listed files above change
-        if: steps.changed-files-specific.outputs.any_changed == 'true'
+      - name: List all added files
+        if: steps.package-lock-check.outputs.any_changed == 'true'
         run: |
-          echo "One or more files listed above has changed."
+          local _MSG=$(printf "%s\n" "Lock file changes:")
+          for file in "${{ steps.package-lock-check.added_files }}"; do
+            _MSG+=$(printf "\n%s" "\`$file\`")
+          done
+          export MSG="$_MSG"
+          echo "::set-env name=MSG::MSG"
 
       - name: comment PR
         uses: unsplash/comment-on-pr@master
-        if: steps.changed-files-specific.outputs.any_changed == 'true'
+        if: steps.package-lock-check.outputs.any_changed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          msg: "A `package-lock.json` file has changed."
+          msg: ${{ env.MSG }}
           check_for_duplicate_msg: true
