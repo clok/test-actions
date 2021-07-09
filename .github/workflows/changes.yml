@@ -54,3 +54,10 @@ jobs:
           header: package-lock.json notice
           recreate: true
           message: ${{ steps.comment.outputs.result }}
+
+      - name: Remove comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: steps.package-lock-check.outputs.any_changed == 'false'
+        with:
+          header: package-lock.json notice
+          delete: true
